@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function QuizApp() {
 
@@ -37,7 +38,7 @@ export default function QuizApp() {
 
     try {
       const response = await axios.get(
-        `https://opentdb.com/api.php?amount=5&category=${selected}&type=multiple`
+        `https://opentdb.com/api.php?amount=10&category=${selected}&type=multiple`
       );
 
       setQuestions(response.data.results);
@@ -68,57 +69,128 @@ export default function QuizApp() {
     }
 
   return (
+    <div className="min-h-screen w-full text-white flex items-center justify-center px-4">
 
-    <>
-      <form onSubmit={startQuiz}>
-        <label htmlFor="category">Choose a subject</label>
+      <div className="w-full max-w-xl">
 
-        <select
-          name="category"
-          id="category"
-          value={selected}
-          onChange={(e) => setSelected(e.target.value)}
-        >
-          <option value="">Select a subject</option>
+        {!quizStarted && !quizFinished && (
+          <div className="text-center mb-10">
+            <h1 className="text-5xl font-bold tracking-wide">PRIMAL QUIZ</h1>
+            <p className="text-gray-400 mt-3">Choose your battlefield</p>
+          </div>
+        )}
 
-          {subjects.map((subject) => (
-            <option key={subject.id} value={subject.id}>
-              {subject.name}
-            </option>
-          ))}
+        
+        {!quizStarted && !quizFinished && (
+          <form
+            onSubmit={startQuiz}
+            className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-xl"
+          >
+            <label htmlFor="category" className="block mb-3 text-gray-300">
+              Select Subject
+            </label>
 
-        </select>
+            <select
+              id="category"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              className="w-full bg-[#2A2A2A] border border-gray-700 rounded-lg px-4 py-3 mb-6 focus:outline-none focus:ring-2 focus:ring-white/30"
+            >
+              <option value="">Choose a subject</option>
+              {subjects.map((subject) => (
+                <option key={subject.id} value={subject.id}>
+                  {subject.name}
+                </option>
+              ))}
+            </select>
 
-        <button type="submit">Start Quiz</button>
-      </form>
+            <button
+              type="submit"
+              className="w-full bg-white text-black font-semibold py-3 rounded-lg hover:bg-gray-200 transition"
+            >
+              Start Quiz
+            </button>
+          </form>
+        )}
 
-      {quizStarted && !quizFinished && questions.length > 0 && (
-        <div>
-          <h2 dangerouslySetInnerHTML={{ __html: questions[currentIndex].question }} />
+        
+        {quizStarted && !quizFinished && questions.length > 0 && (
+          <div className="relative w-125 max-w-xl mx-auto min-h-125 pt-12">
 
-          {[...questions[currentIndex].incorrect_answers,
-            questions[currentIndex].correct_answer]
-            .sort(() => Math.random() - 0.5)
-            .map((answer, index) => (
-              <button
-                key={index}
-                onClick={() => handleAnswer(answer)}
-                dangerouslySetInnerHTML={{ __html: answer }}
-              />
-            ))}
-        </div>
-      )}
+            {questions.slice(0, currentIndex + 1).map((question, index) => {
 
-      {quizFinished && (
-        <div>
-          <h2>Quiz Finished!</h2>
-          <p>Your Score: {score} / {questions.length}</p>
-          <button onClick={() => setQuizFinished(false)}>
-            Play Again
-          </button>
-        </div>
-      )}
-    </>
-    
+              const offset = currentIndex - index;
+              const isCurrent = index === currentIndex;
+
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{
+                    opacity: isCurrent ? 1 : 0.9,
+                    y: isCurrent ? 50 : offset * -18,
+                    scale: isCurrent ? 1 : 1 - offset * 0.03
+                  }}
+                  transition={{ duration: 0.4 }}
+                  className={`absolute top-0 left-0 w-full rounded-2xl p-10 text-center border ${
+                    isCurrent
+                      ? "bg-[#2A2A2A] border-gray-700 shadow-2xl"
+                      : "bg-white/5 border-white/10 backdrop-blur-md shadow-xl"
+                  }`}
+                  style={{ zIndex: 100 - offset }}
+                  >
+
+                  <p className="text-gray-400 mb-3">
+                    #{index + 1}
+                  </p>
+
+                  <h2
+                    className="text-xl font-medium mb-8 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: question.question }}
+                  />
+
+                  {isCurrent && (
+                    <div className="space-y-4">
+                      {[...question.incorrect_answers, question.correct_answer]
+                        .sort(() => Math.random() - 0.5)
+                        .map((answer, i) => (
+                          <button
+                            key={i}
+                            onClick={() => handleAnswer(answer)}
+                            className="w-full bg-[#2A2A2A] hover:bg-white hover:text-black transition py-3 rounded-lg border border-gray-700"
+                            dangerouslySetInnerHTML={{ __html: answer }}
+                          />
+                        ))}
+                    </div>
+                  )}
+
+                </motion.div>
+              );
+            })}
+
+          </div>
+        )}
+
+       
+        {quizFinished && (
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-10 text-center shadow-2xl">
+
+            <h2 className="text-3xl font-bold mb-4">Quiz Finished</h2>
+
+            <p className="text-lg text-gray-300 mb-8">
+              Your Score: <span className="font-bold text-white">{score}</span> / {questions.length}
+            </p>
+
+            <button
+              onClick={() => setQuizFinished(false)}
+              className="bg-white text-black px-8 py-3 rounded-lg font-semibold hover:bg-gray-200 transition"
+            >
+              Play Again
+            </button>
+          </div>
+        )}
+
+      </div>
+    </div>
   );
 }
