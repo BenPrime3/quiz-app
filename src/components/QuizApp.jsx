@@ -125,10 +125,12 @@ export default function QuizApp() {
               return (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 40 }}
+                  initial={{ opacity: 0, y: 140 }}
                   animate={{
-                    opacity: isCurrent ? 1 : 0.9,
-                    y: isCurrent ? 50 : offset * -18,
+                    opacity: isCurrent
+                      ? 1
+                      : Math.max(0, 0.8 - offset * 0.25),
+                    y: isCurrent ? 40 : offset * -18,
                     scale: isCurrent ? 1 : 1 - offset * 0.03
                   }}
                   transition={{ duration: 0.4 }}
